@@ -1,0 +1,44 @@
+services:
+  opencode:
+    image: ghcr.io/anomalyco/opencode:latest
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${OPENCODE_PORT:-4096}:4096"
+    environment:
+      OPENCODE_SERVER_PASSWORD: ${OPENCODE_SERVER_PASSWORD:?set OPENCODE_SERVER_PASSWORD}
+      OPENCODE_SERVER_USERNAME: ${OPENCODE_SERVER_USERNAME:-opencode}
+    command:
+      - web
+      - --port
+      - "4096"
+      - --hostname
+      - "0.0.0.0"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 512
+    mem_limit: 4g
+    cpus: 2
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=256m
+      - /run:rw,noexec,nosuid,nodev,size=64m
+    volumes:
+      # Persist OpenCode state (sessions, config, auth.json) outside the container.
+      - opencode_data:/root/.local/share/opencode
+      - opencode_config:/root/.config/opencode
+      # Mount the repo/workspace you want the agent to access.
+      - ${OPENCODE_PROJECT_DIR:?set OPENCODE_PROJECT_DIR}:/workspace:rw
+    working_dir: /workspace
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:4096/global/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  opencode_data:
+  opencode_config:
