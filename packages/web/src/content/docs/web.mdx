@@ -90,6 +90,29 @@ The username defaults to `opencode` but can be changed with `OPENCODE_SERVER_USE
 
 ---
 
+## Container-First Runtime (Sandboxed + Persistent State)
+
+If you want stronger isolation, run OpenCode in a hardened Docker container and mount only the workspace it should access.
+
+From this repo, a starter profile is available at `packages/opencode/docker-compose.sandbox.yml`.
+
+```bash
+cd packages/opencode
+cp .env.sandbox.example .env.sandbox
+# edit .env.sandbox (set OPENCODE_SERVER_PASSWORD + OPENCODE_PROJECT_DIR)
+
+docker compose --env-file .env.sandbox -f docker-compose.sandbox.yml up -d
+```
+
+This profile is designed so containers stay ephemeral while preserving OpenCode state in named volumes:
+
+- `opencode_data` for data/state
+- `opencode_config` for config
+
+It also enables common hardening defaults (`read_only`, `tmpfs`, dropped capabilities, `no-new-privileges`, and loopback-only port publishing).
+
+---
+
 ## Using the Web Interface
 
 Once started, the web interface provides access to your OpenCode sessions.
